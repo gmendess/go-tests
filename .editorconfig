@@ -1,0 +1,5 @@
+# tem umas extensões que leem esse arquivo no seu repositório para configurar a visualização
+# dos arquivos
+
+indent_style = tab
+indent_size = 4
