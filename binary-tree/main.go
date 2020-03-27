@@ -32,5 +32,18 @@ func main() {
 	} else {
 		fmt.Println("Nó não encontrado!")
 	}
-	
+
+
+	tr.Add(144)
+	tr.Add(9)
+	tr.Add(5)
+	tr.Add(6)
+	tr.Add(120)
+	tr.Add(130)
+	tr.Add(140)
+	tr.Add(115)
+	tr.Add(150)
+
+	fmt.Println("\nÁrvore:")
+	tr.PrintInOrder()
 }
