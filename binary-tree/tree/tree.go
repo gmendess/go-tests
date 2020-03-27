@@ -1,5 +1,7 @@
 package tree
 
+import "fmt"
+
 type node struct {
 	value int
 	left, right *node
@@ -59,4 +61,32 @@ func search_node(subtree *node, value int) bool {
 	} else {
 		return search_node(subtree.left, value)
 	}
+}
+
+func (t *Tree) PrintInOrder() {
+	if t == nil {
+		return
+	}
+
+	print_in_order(t.Root, 0)
+}
+
+func print_in_order(n *node, indent int) {
+	if n == nil {
+		return
+	}
+
+	print_in_order(n.right, indent + 8)
+
+	if indent == 0 {
+		fmt.Printf("%*s", 2, "")
+	} else {
+		fmt.Printf("%*s", indent, "")
+		fmt.Print("---| ")
+	}
+
+	fmt.Println(n.value)	
+
+	print_in_order(n.left, indent + 8)
+	
 }
