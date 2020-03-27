@@ -13,7 +13,7 @@ func main() {
 		fmt.Println("Nó inserido com sucesso!")
 	}
 
-	if tr.Add(13) {
+	if tr.Add(8) {
 		fmt.Println("Nó inserido com sucesso!")
 	}	
 
@@ -26,4 +26,11 @@ func main() {
 	} else {
 		fmt.Println("Nó repetido!")
 	}
+
+	if tr.Search(8) {
+		fmt.Println("Nó encontrado!")
+	} else {
+		fmt.Println("Nó não encontrado!")
+	}
+	
 }
