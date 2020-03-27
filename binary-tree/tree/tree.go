@@ -40,3 +40,23 @@ func add_node(subtree, new_node *node) bool {
 
 	return false
 }
+
+func (t *Tree) Search(value int) bool {
+	if t.Root == nil {
+		return false
+	}
+
+	return search_node(t.Root, value)
+}
+
+func search_node(subtree *node, value int) bool {
+	if subtree == nil {
+		return false
+	} else if subtree.value == value {
+		return true
+	}	else if value > subtree.value {
+		return search_node(subtree.right, value) 
+	} else {
+		return search_node(subtree.left, value)
+	}
+}
