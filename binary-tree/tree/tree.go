@@ -48,19 +48,35 @@ func (t *Tree) Search(value int) bool {
 		return false
 	}
 
-	return search_node(t.Root, value)
+	target, _ := search_node(t.Root, value)
+
+	if target != nil {
+		return true
+	} else {
+		return false
+	}
 }
 
-func search_node(subtree *node, value int) (bool) {
-	if subtree == nil {
-		return false
-	} else if subtree.value == value {
-		return true
-	}	else if value > subtree.value {
-		return search_node(subtree.right, value) 
-	} else {
-		return search_node(subtree.left, value)
+func search_node(n *node, value int) (*node, *node) {
+	var father *node
+
+	// busca pelo nó
+	for {
+		if n == nil {
+			return nil, nil
+		} else if n.value == value {
+			break
+		} else {
+			father = n
+			if value > n.value {
+				n = n.right
+			} else {
+				n = n.left
+			}
+		}
 	}
+
+	return n, father
 }
 
 func (t *Tree) PrintInOrder() {
@@ -100,27 +116,12 @@ func (t *Tree) Remove(value int) bool {
 }
 
 func remove_node(t *Tree, value int) bool {
-	n := t.Root
-	var father *node
-
-	// busca pelo nó
-	for {
-		if n == nil {
-			return false
-		} else if n.value == value {
-			break
-		} else {
-			father = n
-			if value > n.value {
-				n = n.right
-			} else {
-				n = n.left
-			}
-		}
+	n, father := search_node(t.Root, value)
+	if n == nil {
+		return false
 	}
 
-	var aux_node *node
-	var aux_father *node
+	var aux_node, aux_father *node
 
 	if n.left != nil {
 		aux_node, aux_father = get_right_most(n.left)
