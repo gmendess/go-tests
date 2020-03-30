@@ -155,3 +155,14 @@ func get_right_most(n *node) (*node, *node) {
 
 	return n, aux_father
 }
+
+func (t *Tree) RotateRight() {
+	if t.Root == nil || t.Root.left == nil{
+		return
+	}
+
+	save_left := t.Root.left
+	t.Root.left = t.Root.left.right
+	save_left.right = t.Root
+	t.Root = save_left
+}
