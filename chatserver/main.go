@@ -39,6 +39,12 @@ func (s *Server) WaitConnection() *Client {
 }
 
 func (s *Server) HandleClient(c *Client) {
+	defer func() {
+		log.Printf("%v saiu!", c.conn.RemoteAddr())
+		c.conn.Close()
+		delete(s.clients, c)
+	}()
+
 	s.clients[c] = true
 
 	log.Printf("%v entrou!", c.conn.RemoteAddr())
@@ -49,14 +55,15 @@ func (s *Server) HandleClient(c *Client) {
 		s.messages <- fmt.Sprintf("%v: %s\n", c.conn.RemoteAddr(), scanner.Text())
 	}
 
-	log.Printf("%v saiu!", c.conn.RemoteAddr())
-	c.conn.Close()
 }
 
 func (s *Server) Broadcast() {
 	for msg := range s.messages {
 		for client := range s.clients {
-			client.conn.Write([]byte(msg))
+			_, err := client.conn.Write([]byte(msg))
+			if err != nil {
+				log.Panicln(err)
+			}
 		}
 	}
 }
