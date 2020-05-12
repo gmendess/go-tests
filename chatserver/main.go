@@ -17,6 +17,7 @@ type Server struct {
 	listener net.Listener
 	clients map[*Client]bool
 	messages chan string
+	leaving chan string
 }
 
 func NewTCPServer(address string) *Server {
@@ -27,7 +28,8 @@ func NewTCPServer(address string) *Server {
 
 	clients := make(map[*Client]bool)
 	messages := make(chan string)
-	return &Server{conn, clients, messages}
+	leaving := make(chan string)
+	return &Server{conn, clients, messages, leaving}
 }
 
 func (s *Server) WaitConnection() *Client {
@@ -48,10 +50,6 @@ func request_name(s *bufio.Scanner) (string, error) {
 }
 
 func (s *Server) HandleClient(c *Client) {
-	defer func() {
-		c.conn.Close()
-		delete(s.clients, c)
-	}()
 
 	// cria um scanner para ler as mensagens recebidas do cliente
 	scanner := bufio.NewScanner(c.conn)
@@ -76,8 +74,9 @@ func (s *Server) HandleClient(c *Client) {
 		s.messages <- fmt.Sprintf("%s: %s\n", c.name, scanner.Text())
 	}
 
+	delete(s.clients, c) // deleta o cliente antes de replicar sua saida
 	s.messages <- fmt.Sprintf("%s saiu!\n", c.name) // avisa a todos do chat que o cliente se desconectou
-
+	c.conn.Close()
 }
 
 func (s *Server) Broadcast() {
