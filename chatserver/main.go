@@ -81,7 +81,9 @@ func (s *Server) HandleClient(c *Client) {
 }
 
 func (s *Server) Broadcast() {
+	// espera que alguma informação seja enviada para o canal s.messages; a informação recebida é inserida em 'msg'
 	for msg := range s.messages {
+		// replica para todos os clientes a mensagem recebida
 		for client := range s.clients {
 			if _, err := client.conn.Write([]byte(msg)); err != nil {
 				log.Printf("Erro ao replicar mensagem %q! %v", msg, err)
@@ -90,20 +92,21 @@ func (s *Server) Broadcast() {
 	}
 }
 
-func (c Client) String() string {
-	return fmt.Sprintf("%v", c.conn.RemoteAddr())
-}
-
 func main() {
 	server := NewTCPServer(":8080")
 
+	// goroutine que replica as mensagens recebidas de um cliente
 	go server.Broadcast()
+
+	// inicia o loop que espera por conexões
 	for {
 		client := server.WaitConnection()
 		if client == nil {
+			// não foi possível abrir conexão com o cliente, espera por outra conexão
 			continue
 		}
 
+		// lida com a conexão recém criada
 		go server.HandleClient(client)
 	}
 }
