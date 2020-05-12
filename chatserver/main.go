@@ -17,7 +17,6 @@ type Server struct {
 	listener net.Listener
 	clients map[*Client]bool
 	messages chan string
-	leaving chan string
 }
 
 func NewTCPServer(address string) *Server {
@@ -28,8 +27,7 @@ func NewTCPServer(address string) *Server {
 
 	clients := make(map[*Client]bool)
 	messages := make(chan string)
-	leaving := make(chan string)
-	return &Server{conn, clients, messages, leaving}
+	return &Server{conn, clients, messages}
 }
 
 func (s *Server) WaitConnection() *Client {
