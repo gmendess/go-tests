@@ -5,10 +5,12 @@ import (
 	"net"
 	"log"
 	"bufio"
+	"errors"
 )
 
 type Client struct {
 	conn net.Conn
+	name string
 }
 
 type Server struct {
@@ -35,34 +37,54 @@ func (s *Server) WaitConnection() *Client {
 		return nil
 	}
 
-	return &Client{conn}
+	return &Client{conn, ""}
+}
+
+func request_name(s *bufio.Scanner) (string, error) {
+	if s.Scan() != false {
+		return s.Text(), nil
+	}
+	return "", errors.New(fmt.Sprintf("Não foi possível ler nome do cliente! %v", s.Err()))
 }
 
 func (s *Server) HandleClient(c *Client) {
 	defer func() {
-		log.Printf("%v saiu!", c.conn.RemoteAddr())
 		c.conn.Close()
 		delete(s.clients, c)
 	}()
 
+	// cria um scanner para ler as mensagens recebidas do cliente
+	scanner := bufio.NewScanner(c.conn)
+	
+	// solicita o nome do cliente
+	fmt.Fprintf(c.conn, "Digite seu nome: ")
+	var err error
+	if c.name, err = request_name(scanner); err != nil {
+		log.Println(err)
+		return
+	}
+
+	entering_msg := fmt.Sprintf("%s entrou!\n", c.name)
+	s.messages <- entering_msg
+	
+	// após receber receber o nome do cliente e reportar aos outros usuários sua entrada, o cliente é
+	// adicionado no map de clientes
 	s.clients[c] = true
 
-	log.Printf("%v entrou!", c.conn.RemoteAddr())
-	c.conn.Write([]byte("Boas-vindas!\n"))
-
-	scanner := bufio.NewScanner(c.conn)
+	// recebe as mensagens do cliente e envia para o canal de mensagens
 	for scanner.Scan() {
-		s.messages <- fmt.Sprintf("%v: %s\n", c.conn.RemoteAddr(), scanner.Text())
+		s.messages <- fmt.Sprintf("%s: %s\n", c.name, scanner.Text())
 	}
+
+	s.messages <- fmt.Sprintf("%s saiu!\n", c.name) // avisa a todos do chat que o cliente se desconectou
 
 }
 
 func (s *Server) Broadcast() {
 	for msg := range s.messages {
 		for client := range s.clients {
-			_, err := client.conn.Write([]byte(msg))
-			if err != nil {
-				log.Panicln(err)
+			if _, err := client.conn.Write([]byte(msg)); err != nil {
+				log.Printf("Erro ao replicar mensagem %q! %v", msg, err)
 			}
 		}
 	}
