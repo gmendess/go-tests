@@ -6,6 +6,7 @@ import (
 	"log"
 	"bufio"
 	"errors"
+	"time"
 )
 
 type Client struct {
@@ -60,16 +61,34 @@ func (s *Server) HandleClient(c *Client) {
 		return
 	}
 
-	entering_msg := fmt.Sprintf("%s entrou!\n", c.name)
-	s.messages <- entering_msg
-	
+	s.messages <- fmt.Sprintf("%s entrou!\n", c.name)
+
 	// após receber receber o nome do cliente e reportar aos outros usuários sua entrada, o cliente é
 	// adicionado no map de clientes
 	s.clients[c] = true
 
-	// recebe as mensagens do cliente e envia para o canal de mensagens
-	for scanner.Scan() {
-		s.messages <- fmt.Sprintf("%s: %s\n", c.name, scanner.Text())
+	client_message := make(chan string)
+
+	// goroutine que recebe as mensagens do cliente e envia para o canal cliente_message
+	go func() {
+		for scanner.Scan() {
+			client_message <- fmt.Sprintf("%s: %s\n", c.name, scanner.Text())
+		}
+	}()
+
+	// código responsável por gerenciar o timeout do cliente
+	var ticker *time.Ticker
+	loop: 
+	for {
+		ticker = time.NewTicker(2 * time.Minute) // cada iteração do for cria um novo ticker
+		select {
+			case <-ticker.C: // se alguma informação for recebida do ticker, significa que se passaram 2 minutos sem o cliente enviar mensagens
+				c.conn.Write([]byte("Timeout!\n"))
+				break loop
+			case msg := <-client_message:
+				s.messages <- msg
+				ticker.Stop() // para o ticker atual para outro ser criado
+		}
 	}
 
 	delete(s.clients, c) // deleta o cliente antes de replicar sua saida
